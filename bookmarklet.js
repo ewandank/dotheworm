@@ -2,46 +2,37 @@
   // theres a chance this selector is undefined, i don't care.
   document.querySelector('[data-testid="tab-play-by-play"]').click();
 
-  const second_half = [
-    ...document.querySelector('[data-testid="period-2nd-half"]').childNodes,
-  ].map((containerNode) => containerNode.firstChild?.childNodes);
+// Helper function to get and filter rows
+const getValidRows = (period) => {
+  const rows = document.querySelector(`[data-testid="period-${period}"]`).childNodes;
+  return Array.from(rows).map(row => row.firstChild?.childNodes)
+    .filter(row => row && row.length >= 3 && row[1].firstChild.innerText !== "Foul");
+};
 
-  const first_half = [
-    ...document.querySelector('[data-testid="period-1st-half"]').childNodes,
-  ].map((containerNode) => containerNode.firstChild?.childNodes);
+// Helper function to process a valid row and extract time and delta
+const processRow = (row, halfOffset = 0) => {
+  const [minutes, seconds] = row[0].innerText.split(":");
+  const time = (Number(minutes) + halfOffset) * 60 + Number(seconds);
+  const [teamA, teamB] = row[2].innerText.split(" - ");
+  return { time, delta: Number(teamA) - Number(teamB) };
+};
 
-  const deltas = [];
-  const times = [];
-  for (const row of first_half) {
-    // ignore the header
-    if (row.length < 3) {
-      continue;
-    }
-    if (row[1].firstChild.innerText === "Foul") {
-      continue;
-    }
-    const [minutes, seconds] = row[0].innerText.split(":");
-    times.push((Number(minutes)+20) * 60 + Number(seconds));
-    // this index is probably a little dodgy.
-    const [teamA, teamB] = row[2].innerText.split(" - ");
-    deltas.push(Number(teamA) - Number(teamB));
-  }
-  for (const row of second_half) {
-    // ignore the header
-    if (row.length < 3) {
-      continue;
-    }
-    if (row[1].firstChild.innerText === "Foul") {
-      continue;
-    }
-    const [minutes, seconds] = row[0].innerText.split(":");
-    times.push((Number(minutes)) * 60 + Number(seconds));
-    // this index is probably a little dodgy.
-    const [teamA, teamB] = row[2].innerText.split(" - ");
-    deltas.push(Number(teamA) - Number(teamB));
-  }
-  console.log(times);
-  console.log(deltas);
+// Process both halves and combine results
+const processHalf = (period, halfOffset) => {
+  return getValidRows(period).map(row => processRow(row, halfOffset));
+};
+
+// Combine first and second half results
+const firstHalfResults = processHalf("1st-half", 20);
+const secondHalfResults = processHalf("2nd-half", 0);
+
+// Flatten times and deltas into separate arrays
+const times = [...firstHalfResults, ...secondHalfResults].map(result => result.time);
+const deltas = [...firstHalfResults, ...secondHalfResults].map(result => result.delta);
+
+console.log(times);
+console.log(deltas);
+
 
   //   let first_half = [
   //     ...document.querySelector('[data-testid="period-1st-half"]').childNodes,
