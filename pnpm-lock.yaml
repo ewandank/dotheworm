@@ -11,6 +11,9 @@ importers:
       chart.js:
         specifier: ^4.4.3
         version: 4.4.3
+      chartjs-plugin-annotation:
+        specifier: ^3.0.1
+        version: 3.0.1(chart.js@4.4.3)
     devDependencies:
       typescript:
         specifier: ^5.5.3
@@ -249,6 +252,11 @@ packages:
     resolution: {integrity: sha512-qK1gkGSRYcJzqrrzdR6a+I0vQ4/R+SoODXyAjscQ/4mzuNzySaMCd+hyVxitSY1+L2fjPD1Gbn+ibNqRmwQeLw==}
     engines: {pnpm: '>=8'}
 
+  chartjs-plugin-annotation@3.0.1:
+    resolution: {integrity: sha512-hlIrXXKqSDgb+ZjVYHefmlZUXK8KbkCPiynSVrTb/HjTMkT62cOInaT1NTQCKtxKKOm9oHp958DY3RTAFKtkHg==}
+    peerDependencies:
+      chart.js: '>=4.0.0'
+
   esbuild@0.21.5:
     resolution: {integrity: sha512-mg3OPMV4hXywwpoDxu3Qda5xCKQi+vCTZq8S9J/EpkhB2HzKXq4SNFZE3+NK93JYxc8VMSep+lOUSC/RVKaBqw==}
     engines: {node: '>=12'}
@@ -442,6 +450,10 @@ snapshots:
   chart.js@4.4.3:
     dependencies:
       '@kurkle/color': 0.3.2
+
+  chartjs-plugin-annotation@3.0.1(chart.js@4.4.3):
+    dependencies:
+      chart.js: 4.4.3
 
   esbuild@0.21.5:
     optionalDependencies:

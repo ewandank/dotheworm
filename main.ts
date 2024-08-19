@@ -16,11 +16,15 @@ const getValidRows = (period) => {
   const rows = document.querySelector(
     `[data-testid="period-${period}"]`
   ).childNodes;
-  if(rows === null) return []
+  if (rows === null) return [];
   return Array.from(rows)
     .map((row) => row.firstChild?.childNodes)
     .filter(
-      (row) => row && row.length >= 3 && row[1] && row[1]?.firstChild?.innerText !== "Foul"
+      (row) =>
+        row &&
+        row.length >= 3 &&
+        row[1] &&
+        row[1]?.firstChild?.innerText !== "Foul"
     );
 };
 
@@ -29,7 +33,7 @@ const processRow = (row, halfOffset = 0) => {
   const [minutes, seconds] = row[0].innerText.split(":");
   const time = (Number(minutes) + halfOffset) * 60 + Number(seconds);
   const [teamA, teamB] = row[2].innerText.split(" - ");
-  return { time, delta: Number(teamB) - Number(teamA) };
+  return { time, delta: Number(teamA) - Number(teamB) };
 };
 
 /**
@@ -46,7 +50,7 @@ const processHalf = (period, halfOffset) => {
 const firstHalfResults = processHalf("1st-half", 20);
 const secondHalfResults = processHalf("2nd-half", 0);
 const allResults = [...firstHalfResults, ...secondHalfResults].sort(
-  (a, b) => a.time - b.time
+  (a, b) => b.time - a.time
 );
 // Flatten times and deltas into separate arrays
 const times = allResults.map((result) => result.time);
@@ -60,8 +64,9 @@ deltas.unshift(0);
 times.push(2400);
 deltas.push(deltas.at(-1));
 
-console.log(deltas);
-console.log(times);
+console.log(deltas)
+console.log(times)
+
 // Create the chart
 Chart.register(...registerables);
 // Create and append canvas element
@@ -71,57 +76,62 @@ canvas.id = "myChart";
 canvas.width = 1000;
 canvas.height = 1000;
 document.body.appendChild(canvas);
-
+const graphSize = Math.max(Math.max(...deltas), Math.abs(Math.min(...deltas)));
 const ctx = canvas.getContext("2d");
-new Chart(ctx, {
-  type: "line",
-  legend: {
-    hidden: true,
-  },
+if (ctx !== null) {
+  new Chart(ctx, {
+    type: "line",
+    data: {
+      labels: times,
+      datasets: [
+        {
+          // label: "Score",
+          data: deltas,
+          fill: false,
+          backgroundColor: "blue",
+          stepped: true,
+          borderColor: "blue",
+          borderWidth: 2,
+          pointRadius: 0, // No markers
+        },
+      ],
+    },
+    options: {
+      plugins: {
+        backgroundColor: backgroundPlugin,
+        legend: { display: false },
+      },
 
-  data: {
-    labels: times,
-    datasets: [
-      {
-        // label: "Score",
-        data: deltas,
-        fill: false,
-        backgroundColor: "blue",
-        stepped: true,
-        borderColor: "blue",
-        borderWidth: 2,
-        pointRadius: 0, // No markers
-      },
-    ],
-  },
-  options: {
-    plugins: {
-      backgroundColor: backgroundPlugin,
-    },
-    scales: {
-      x: {
-        grid: {
-          display: false,
+      scales: {
+        x: {
+          grid: {
+            display: false,
+          },
+          min: 0,
+          max: 2400,
+          ticks: {
+            display: false,
+          },
         },
-        min: 0,
-        max: 2400,
-        ticks: {
-          display: false, // Hide x-axis ticks
-        },
-      },
-      y: {
-        grid: {
-          display: false,
-        },
-        ticks: {
-          stepSize: 1
+        y: {
+          min: -graphSize,
+          max: graphSize,
+          grid: {
+            lineWidth: ({ tick }) => (tick.value == 0 ? 1 : 0),
+            drawTicks: false,
+
+            // color: "black",
+          },
+          ticks: {
+            stepSize: 1,
+          },
         },
       },
     },
-  },
-  plugins: [backgroundPlugin],
-});
-ctx.save();
-ctx.beginPath();
-ctx.stroke();
-ctx.restore();
+    plugins: [backgroundPlugin],
+  });
+  ctx.save();
+  ctx.beginPath();
+  ctx.stroke();
+  ctx.restore();
+}
