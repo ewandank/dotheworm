@@ -1,95 +1,97 @@
-import { Chart, registerables } from "chart.js";
+
 import { backgroundPlugin, labelPlugin } from "./plugins";
-import { processHalf } from "./data";
+import { getData } from "./data";
 
-// Combine first and second half results
-const secondHalfResults = processHalf("2nd-half");
-const firstHalfResults = processHalf("1st-half");
-const allResults: { x: number; y: number }[] = [
-  { x: 0, y: 0 },
-  ...firstHalfResults,
-  ...secondHalfResults,
-].sort((a, b) => a.x - b.x);
-allResults.push({ x: 2400, y: allResults[allResults.length - 1].y });
-// Flatten times and deltas into separate arrays
-// const times = allResults.map((result) => result.time);
-// const deltas = allResults.map((result) => result.delta);
-// times.push(2400);
-// deltas.push(deltas[deltas.length - 1]);
-// Create the chart
-Chart.register(...registerables);
-// Create and append canvas element
-const canvas = document.createElement("canvas");
 
-canvas.id = "myChart";
-canvas.width = 1000;
-canvas.height = 1000;
-document.body.appendChild(canvas);
-const graphSize = 20;
-// Math.round(Math.max(Math.max(...deltas), Math.abs(Math.min(...deltas))) / 2) *
-//   2 +
-// 4;
-const ctx = canvas.getContext("2d");
-const myChart = new Chart(ctx!, {
-  type: "line",
-  data: {
-    // labels: times,
-    datasets: [
-      {
-        // label: "Score",
-        normalized: true,
+const data = getData();
 
-        data: allResults,
-        fill: false,
-        backgroundColor: "blue",
-        stepped: true,
-        borderColor: "blue",
-        borderWidth: 2,
-        pointRadius: 0, // No markers
-      },
-    ],
-  },
-  options: {
-    plugins: {
-      title: {
-        display: true,
-        text: document.title.split(",")[0],
-        fullSize: false,
-        font: { size: 30 },
-      },
-      // backgroundColor: backgroundPlugin,
-      legend: { display: false },
-    },
-    scales: {
-      x: {
-        type: "linear",
-        grid: {
-          display: false,
-        },
-        min: 0,
-        max: 2400,
-        ticks: { display: false },
-      },
-      y: {
-        min: -graphSize,
-        max: graphSize,
-        reverse: false,
-        border: {
-          dash: ({ tick }) => (tick.value === 0 ? [0, 0] : [5, 5]),
-        },
-        grid: {
-          drawTicks: false,
-        },
-        ticks: {
-          stepSize: graphSize < 20 ? 1 : 2,
-        },
-      },
-    },
-  },
+/**
+ * Get the largest absolute value, round it to be even and pad it by 2.
+ */
+const graphSize =
+  Math.round(data.reduce((max, { y }) => Math.max(max, Math.abs(y)), 0) / 2) *
+    2 +
+  2;
 
-  plugins: [backgroundPlugin, labelPlugin],
-});
-ctx?.save();
-ctx?.beginPath();
-ctx?.stroke();
-ctx?.restore();
+// IIFE to create and render the chart.
+(() => {
+  const firstHalfSection = document.querySelector(
+    `[data-testid="period-1st-half"]`
+  );
+  //@ts-expect-error welcome to the wild west
+  import("https://unpkg.com/chart.js@4.4.4/dist/chart.umd.js").then(() => {
+
+
+    // Create and append canvas element
+    const canvas = document.createElement("canvas");
+    canvas.id = "e";
+    canvas.width = 1000;
+    canvas.height = 500;
+    firstHalfSection.appendChild(canvas);
+
+    const ctx = canvas.getContext("2d");
+
+    new Chart(ctx, {
+      type: "line",
+      data: {
+        // labels: times,
+        datasets: [
+          {
+            // label: "Score",
+            normalized: true,
+
+            data,
+            fill: false,
+            backgroundColor: "blue",
+            stepped: true,
+            borderColor: "blue",
+            borderWidth: 2,
+            pointRadius: 0, // No markers
+          },
+        ],
+      },
+      options: {
+        plugins: {
+          title: {
+            display: true,
+            text: document.title.split(",")[0].replace(" v ", " vs "),
+            fullSize: false,
+            font: { size: 30 },
+          },
+          legend: { display: false },
+        },
+        scales: {
+          x: {
+            type: "linear",
+            grid: {
+              display: false,
+            },
+            min: 0,
+            max: 2400,
+            ticks: { display: false },
+          },
+          y: {
+            min: -graphSize,
+            max: graphSize,
+            reverse: false,
+            border: {
+              dash: ({ tick }) => (tick.value === 0 ? [0, 0] : [5, 5]),
+            },
+            grid: {
+              drawTicks: false,
+            },
+            ticks: {
+              stepSize: graphSize < 20 ? 1 : 2,
+            },
+          },
+        },
+      },
+
+      plugins: [backgroundPlugin, labelPlugin],
+    });
+    ctx.save();
+    ctx.beginPath();
+    ctx.stroke();
+    ctx.restore();
+  });
+})();

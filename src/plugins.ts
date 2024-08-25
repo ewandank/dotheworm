@@ -27,7 +27,7 @@ export const labelPlugin: Plugin = {
     const chartArea = chart.chartArea;
     const width = chartArea.right - chartArea.left;
     const height = chartArea.bottom - chartArea.top;
-    const fontSize = 16;
+    const fontSize = 8;
     const fontWeight = 800;
 
     ctx.save();

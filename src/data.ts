@@ -2,16 +2,14 @@ type Half = "1st-half" | "2nd-half";
 
 /**
  *
- * @param period
- * @returns
+ * @param period first or second half
+ * @returns an array of valid rows, 
+ * i.e Scoring events (not fouls) or separator rows
  */
 const getValidRows = (period: Half) => {
   const rows = document.querySelector(
     `[data-testid="period-${period}"]`
   )?.childNodes;
-  if (rows === null || rows === undefined) {
-    return [];
-  }
   return Array.from(rows)
     .map((row) => row.firstChild?.childNodes)
     .filter(
@@ -19,7 +17,7 @@ const getValidRows = (period: Half) => {
         row &&
         row.length >= 3 &&
         row[1] &&
-        (row[1]?.firstChild as HTMLElement | undefined)?.innerText !== "Foul"
+        (row[1]?.firstChild as HTMLElement)?.innerText !== "Foul"
     );
 };
 
@@ -31,26 +29,35 @@ const getValidRows = (period: Half) => {
  * ignoring the middle gunk
  * @param row
  * @param halfOffset
- * @returns
+ * @retuns an object with x and y values.
  */
 const processRow = (row: any, halfOffset = 0) => {
   const [minutes, seconds] = row[0].innerText.split(":");
   const time = 2400 - ((Number(minutes) + halfOffset) * 60 + Number(seconds));
   const [teamA, teamB] = row[2].innerText.split(" - ");
-  console.log({
-    ms: `${Number(minutes) + halfOffset}:${Number(seconds)}`,
-    time,
-    delta: Number(teamA) - Number(teamB),
-  });
-  return { x:time, y: Number(teamA) - Number(teamB) };
+  return { x: time, y: Number(teamA) - Number(teamB) };
 };
 
 /**
- * Process both halves and combine results
+ * Porccess all valid rows from a a half into a {x: time, y: delta} format
  * @param period first or second half
  * @returns an array of objects with a delta and time in seconds
  */
-export const processHalf = (period: Half) => {
+const processHalf = (period: Half) => {
   const halfOffset = period === "1st-half" ? 20 : 0;
   return getValidRows(period).map((row) => processRow(row, halfOffset));
+};
+
+/**
+ * Process the first and second half, sort the results,
+ * and add a start and end score so the worm is filled out.
+ */
+export const getData = () => {
+  const allResults  = [
+    { x: 0, y: 0 },
+    ...processHalf("1st-half"),
+    ...processHalf("2nd-half"),
+  ].sort((a, b) => a.x - b.x);
+  allResults.push({ x: 2400, y: allResults[allResults.length - 1].y });
+  return allResults;
 };
