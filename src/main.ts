@@ -1,11 +1,20 @@
 import { Chart, registerables } from "chart.js";
 import { backgroundPlugin, labelPlugin } from "./plugins";
-// Helper function to get and filter rows
-const getValidRows = (period) => {
+
+type Half = "1st-half" | "2nd-half";
+
+/**
+ *
+ * @param period
+ * @returns
+ */
+const getValidRows = (period: Half) => {
   const rows = document.querySelector(
     `[data-testid="period-${period}"]`
-  ).childNodes;
-  if (rows === null) return [];
+  )?.childNodes;
+  if (rows === null || rows === undefined) {
+    return [];
+  }
   return Array.from(rows)
     .map((row) => row.firstChild?.childNodes)
     .filter(
@@ -13,19 +22,19 @@ const getValidRows = (period) => {
         row &&
         row.length >= 3 &&
         row[1] &&
-        row[1]?.firstChild?.innerText !== "Foul"
+        (row[1]?.firstChild as HTMLElement | undefined)?.innerText !== "Foul"
     );
 };
 
 /**
  * A helper function to parse a row of into our data object.
- * a row might look like: 
+ * a row might look like:
  * `12:00 2pts 10-5`
  * as such, parse the first part into seconds and the last part into a delta,
  * ignoring the middle gunk
- * @param row 
- * @param halfOffset 
- * @returns 
+ * @param row
+ * @param halfOffset
+ * @returns
  */
 const processRow = (row: any, halfOffset = 0) => {
   const [minutes, seconds] = row[0].innerText.split(":");
@@ -44,8 +53,8 @@ const processRow = (row: any, halfOffset = 0) => {
  * @param period first or second half
  * @returns an array of objects with a delta and time in seconds
  */
-const processHalf = (period: "1st-half" | "2nd-half") => {
-  const halfOffset = period === "1st-half" ? 20 : 0
+const processHalf = (period: Half) => {
+  const halfOffset = period === "1st-half" ? 20 : 0;
   return getValidRows(period).map((row) => processRow(row, halfOffset));
 };
 
@@ -61,7 +70,7 @@ const allResults: { time: number; delta: number }[] = [
 const times = allResults.map((result) => result.time);
 const deltas = allResults.map((result) => result.delta);
 times.push(2400);
-deltas.push(deltas[deltas.length-1]);
+deltas.push(deltas[deltas.length - 1]);
 // Create the chart
 Chart.register(...registerables);
 // Create and append canvas element
@@ -101,7 +110,7 @@ const myChart = new Chart(ctx!, {
         display: true,
         text: document.title.split(",")[0],
         fullSize: false,
-        font: {size: 30}
+        font: { size: 30 },
       },
       // backgroundColor: backgroundPlugin,
       legend: { display: false },
@@ -121,12 +130,10 @@ const myChart = new Chart(ctx!, {
         max: graphSize,
         reverse: false,
         border: {
-          dash: ({ tick }) => (tick.value === 0 ? [0,0] :[5,5]),
+          dash: ({ tick }) => (tick.value === 0 ? [0, 0] : [5, 5]),
         },
         grid: {
-
           drawTicks: false,
-
         },
         ticks: {
           stepSize: graphSize < 20 ? 1 : 2,
@@ -142,12 +149,3 @@ ctx?.beginPath();
 ctx?.stroke();
 ctx?.restore();
 
-const button = document.createElement("button");
-button.innerText = "flip across x axis";
-button.onclick = () => {
-  if (myChart?.options?.scales?.y === undefined) return;
-
-  myChart.options.scales.y.reverse = !myChart.options.scales.y.reverse;
-  myChart.update();
-};
-document.body.appendChild(button);
