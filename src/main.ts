@@ -2,21 +2,20 @@ import { Chart, registerables } from "chart.js";
 import { backgroundPlugin, labelPlugin } from "./plugins";
 import { processHalf } from "./data";
 
-
-
 // Combine first and second half results
 const secondHalfResults = processHalf("2nd-half");
 const firstHalfResults = processHalf("1st-half");
-const allResults: { time: number; delta: number }[] = [
-  { time: 0, delta: 0 },
+const allResults: { x: number; y: number }[] = [
+  { x: 0, y: 0 },
   ...firstHalfResults,
   ...secondHalfResults,
-].sort((a, b) => a.time - b.time);
+].sort((a, b) => a.x - b.x);
+allResults.push({ x: 2400, y: allResults[allResults.length - 1].y });
 // Flatten times and deltas into separate arrays
-const times = allResults.map((result) => result.time);
-const deltas = allResults.map((result) => result.delta);
-times.push(2400);
-deltas.push(deltas[deltas.length - 1]);
+// const times = allResults.map((result) => result.time);
+// const deltas = allResults.map((result) => result.delta);
+// times.push(2400);
+// deltas.push(deltas[deltas.length - 1]);
 // Create the chart
 Chart.register(...registerables);
 // Create and append canvas element
@@ -26,21 +25,21 @@ canvas.id = "myChart";
 canvas.width = 1000;
 canvas.height = 1000;
 document.body.appendChild(canvas);
-const graphSize =
-  Math.round(Math.max(Math.max(...deltas), Math.abs(Math.min(...deltas))) / 2) *
-    2 +
-  4;
+const graphSize = 20;
+// Math.round(Math.max(Math.max(...deltas), Math.abs(Math.min(...deltas))) / 2) *
+//   2 +
+// 4;
 const ctx = canvas.getContext("2d");
 const myChart = new Chart(ctx!, {
   type: "line",
   data: {
-    labels: times,
+    // labels: times,
     datasets: [
       {
         // label: "Score",
         normalized: true,
 
-        data: deltas,
+        data: allResults,
         fill: false,
         backgroundColor: "blue",
         stepped: true,
@@ -94,4 +93,3 @@ ctx?.save();
 ctx?.beginPath();
 ctx?.stroke();
 ctx?.restore();
-

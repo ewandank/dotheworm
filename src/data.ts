@@ -42,7 +42,7 @@ const processRow = (row: any, halfOffset = 0) => {
     time,
     delta: Number(teamA) - Number(teamB),
   });
-  return { time, delta: Number(teamA) - Number(teamB) };
+  return { x:time, y: Number(teamA) - Number(teamB) };
 };
 
 /**
