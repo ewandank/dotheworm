@@ -1,4 +1,5 @@
 import { Chart, registerables } from "chart.js";
+import annoationPlugin from "chartjs-plugin-annotation";
 const backgroundPlugin = {
   id: "customCanvasBackgroundColor",
   beforeDraw: (chart) => {
@@ -11,10 +12,41 @@ const backgroundPlugin = {
   },
 };
 
+const textPlugin = {
+  id: "textPlugin",
+  beforeDraw: (chart) => {
+    const ctx = chart.ctx;
+    const width = chart.width;
+    const height = chart.height;
+    const fontSize = 100;
+    const text1 = "H1";
+    const text2 = "H2";
+
+    ctx.save();
+    ctx.font = `${fontSize}px Arial`;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.globalAlpha = 0.8;
+
+    // Draw grey rectangle on the left half
+    ctx.fillStyle = "lightgrey";
+    ctx.fillRect(0, 0, width / 2, height);
+
+    // Draw H1 centered within the grey rectangle
+    ctx.fillStyle = "white";
+    ctx.fillText(text1, width / 4, height / 2);
+
+    // Draw H2
+    ctx.fillStyle = "lightgrey";
+    ctx.fillText(text2, (3 * width) / 4, height / 2);
+
+    ctx.restore();
+  },
+};
 // Helper function to get and filter rows
 const getValidRows = (period) => {
   const rows = document.querySelector(
-    `[data-testid="period-${period}"]`
+    `[data-testid="period-${period}"]`,
   ).childNodes;
   if (rows === null) return [];
   return Array.from(rows)
@@ -24,15 +56,21 @@ const getValidRows = (period) => {
         row &&
         row.length >= 3 &&
         row[1] &&
-        row[1]?.firstChild?.innerText !== "Foul"
+        row[1]?.firstChild?.innerText !== "Foul",
     );
 };
 
 // Helper function to process a valid row and extract time and delta
 const processRow = (row, halfOffset = 0) => {
   const [minutes, seconds] = row[0].innerText.split(":");
-  const time = (Number(minutes) + halfOffset) * 60 + Number(seconds);
+  const time = 2400 - ((Number(minutes) + halfOffset) * 60 + Number(seconds));
+  console.log(typeof time);
   const [teamA, teamB] = row[2].innerText.split(" - ");
+  console.log({
+    ms: `${Number(minutes) + halfOffset}:${Number(seconds)}`,
+    time,
+    delta: Number(teamA) - Number(teamB),
+  });
   return { time, delta: Number(teamA) - Number(teamB) };
 };
 
@@ -47,28 +85,20 @@ const processHalf = (period, halfOffset) => {
 };
 
 // Combine first and second half results
-const firstHalfResults = processHalf("1st-half", 20);
 const secondHalfResults = processHalf("2nd-half", 0);
-const allResults = [...firstHalfResults, ...secondHalfResults].sort(
-  (a, b) => b.time - a.time
-);
+const firstHalfResults = processHalf("1st-half", 20);
+const allResults: { time: number; delta: number }[] = [
+  { time: 0, delta: 0 },
+  ...firstHalfResults,
+  ...secondHalfResults,
+].sort((a, b) => a.time - b.time);
 // Flatten times and deltas into separate arrays
 const times = allResults.map((result) => result.time);
 const deltas = allResults.map((result) => result.delta);
-
-// score starts at 0-0
-times.unshift(0);
-deltas.unshift(0);
-
-// score ends with the last score.
 times.push(2400);
 deltas.push(deltas.at(-1));
-
-console.log(deltas)
-console.log(times)
-
 // Create the chart
-Chart.register(...registerables);
+Chart.register(...registerables, annoationPlugin);
 // Create and append canvas element
 const canvas = document.createElement("canvas");
 
@@ -76,62 +106,81 @@ canvas.id = "myChart";
 canvas.width = 1000;
 canvas.height = 1000;
 document.body.appendChild(canvas);
-const graphSize = Math.max(Math.max(...deltas), Math.abs(Math.min(...deltas)));
+const graphSize =
+  Math.round(Math.max(Math.max(...deltas), Math.abs(Math.min(...deltas))) / 2) *
+    2 +
+  4;
 const ctx = canvas.getContext("2d");
-if (ctx !== null) {
-  new Chart(ctx, {
-    type: "line",
-    data: {
-      labels: times,
-      datasets: [
-        {
-          // label: "Score",
-          data: deltas,
-          fill: false,
-          backgroundColor: "blue",
-          stepped: true,
-          borderColor: "blue",
-          borderWidth: 2,
-          pointRadius: 0, // No markers
-        },
-      ],
-    },
-    options: {
-      plugins: {
-        backgroundColor: backgroundPlugin,
-        legend: { display: false },
-      },
+const myChart = new Chart(ctx, {
+  type: "line",
+  data: {
+    labels: times,
+    datasets: [
+      {
+        // label: "Score",
+        normalized: true,
 
-      scales: {
-        x: {
-          grid: {
-            display: false,
-          },
-          min: 0,
-          max: 2400,
-          ticks: {
-            display: false,
-          },
+        data: deltas,
+        fill: false,
+        backgroundColor: "blue",
+        stepped: true,
+        borderColor: "blue",
+        borderWidth: 2,
+        pointRadius: 0, // No markers
+      },
+    ],
+  },
+  options: {
+    plugins: {
+      title: {
+        display: true,
+        text: "Custom Chart Title",
+        fullSize: false,
+      },
+      backgroundColor: backgroundPlugin,
+      legend: { display: false },
+      textPlugin: true,
+    },
+    scales: {
+      x: {
+        grid: {
+          display: false,
         },
-        y: {
-          min: -graphSize,
-          max: graphSize,
-          grid: {
-            lineWidth: ({ tick }) => (tick.value == 0 ? 1 : 0),
-            drawTicks: false,
+        min: 0,
+        max: 2400,
+        ticks: { display: false },
+      },
+      y: {
+        min: -graphSize,
+        max: graphSize,
+        reverse: false,
+        grid: {
+          lineWidth: ({ tick }) => {
+            console.log(tick.value);
+            return tick.value == 0 ? 1 : 0;
+          },
+          drawTicks: false,
 
-            // color: "black",
-          },
-          ticks: {
-            stepSize: 1,
-          },
+          // color: "black",
+        },
+        ticks: {
+          stepSize: graphSize < 20 ? 1 : 2,
         },
       },
     },
-    plugins: [backgroundPlugin],
-  });
-  ctx.save();
-  ctx.beginPath();
-  ctx.stroke();
-  ctx.restore();
-}
+  },
+
+  plugins: [backgroundPlugin, textPlugin],
+});
+ctx.save();
+ctx.beginPath();
+ctx.stroke();
+ctx.restore();
+
+const button = document.createElement("button");
+button.innerText = "flip across x axis";
+button.onclick = () => {
+  myChart.options.scales.y.reverse = !myChart.options.scales.y.reverse;
+  myChart.update();
+};
+document.body.appendChild(button);
