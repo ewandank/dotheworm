@@ -143,6 +143,7 @@ const myChart = new Chart(ctx, {
     },
     scales: {
       x: {
+        type: "linear",
         grid: {
           display: false,
         },
