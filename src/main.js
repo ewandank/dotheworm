@@ -1,7 +1,6 @@
-
+// This is super annoying to type. I can't be stuffed.
 import { backgroundPlugin, labelPlugin } from "./plugins";
 import { getData } from "./data";
-
 
 const data = getData();
 
@@ -18,13 +17,12 @@ const graphSize =
   const firstHalfSection = document.querySelector(
     `[data-testid="period-1st-half"]`
   );
-  //@ts-expect-error welcome to the wild west
+
+  // `Chart` is now available in global scope.
   import("https://unpkg.com/chart.js@4.4.4/dist/chart.umd.js").then(() => {
-
-
-    // Create and append canvas element
     const canvas = document.createElement("canvas");
-    canvas.id = "e";
+    // Minifies better.
+    canvas.id = "a";
     canvas.width = 1000;
     canvas.height = 500;
     firstHalfSection.appendChild(canvas);
@@ -93,5 +91,18 @@ const graphSize =
     ctx.beginPath();
     ctx.stroke();
     ctx.restore();
+
+    // Create and append button to copy chart as image
+    const copyButton = document.createElement("button");
+    copyButton.innerText = "Copy Chart as Image";
+    firstHalfSection.appendChild(copyButton);
+
+    copyButton.addEventListener("click", () => {
+      const dataUrl = canvas.toDataURL("image/png");
+      const imgTag = `<img src="${dataUrl}" />`;
+      const blob = new Blob([imgTag], { type: "text/html" });
+      const item = new ClipboardItem({ "text/html": blob });
+      navigator.clipboard.write([item]);
+    });
   });
 })();

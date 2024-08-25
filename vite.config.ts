@@ -10,7 +10,7 @@ export default defineConfig({
     // minify: false,
     lib: {
       // Could also be a dictionary or array of multiple entry points
-      entry: "main.ts",
+      entry: "main.js",
       name: "dotheworm",
       // the proper extensions will be added
       fileName: "dotheworm",

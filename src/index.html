@@ -2,12 +2,32 @@
   <head>
     <script type="module">
       import jsFunc from "../dist/dotheworm.iife.js?raw";
-     window.bookmarklet = `javascript:${jsFunc}`;
+      // URI-encode only a subset of characters. Most user agents are permissive with
+      // non-reserved characters, so don't obfuscate more than we have to.
+      const specialCharacters = [
+        "%",
+        '"',
+        "<",
+        ">",
+        "#",
+        "@",
+        " ",
+        "\\&",
+        "\\?",
+      ];
+
+      const urlencode = (code) =>
+        code.replace(
+          new RegExp(specialCharacters.join("|"), "g"),
+          encodeURIComponent
+        );
+        const prefix = code => `javascript:${code}`;
+     const thingToCopy = prefix(urlencode(jsFunc))
+     document.body.append(thingToCopy)
     </script>
     <title>Worm Chart Bookmarklet</title>
   </head>
   <body>
-    <button id="copy_button" onclick="() => {navigator.clipboard.writeText(window.bookmarklet)}">Copy Bookmarklet</button>
-javascript:(function(){%22use%20strict%22;const%20d={id:%22customCanvasBackgroundColor%22,beforeDraw:s=%3E{const{ctx:e}=s;e.save(),e.globalCompositeOperation=%22destination-over%22,e.fillStyle=%22%23ffffff%22,e.fillRect(0,0,s.width,s.height),e.restore()}},f={id:%22textPlugin%22,beforeDraw:s=%3E{const%20e=s.ctx,t=s.chartArea,l=t.right-t.left,o=t.bottom-t.top,i=8,a=800;e.save(),e.font=`${800}%20${8}rem%20Arial`,e.textAlign=%22center%22,e.textBaseline=%22middle%22,e.fillStyle=%22%23f7f7f9%22,e.fillRect(t.left,t.top,l/2,o),e.fillStyle=%22%23e7e6e6%22,e.fillText(%22H1%22,t.left+l/4,s.height/2+16),e.fillStyle=%22%23e7e6e6%22,e.fillText(%22H2%22,t.left+3*l/4,s.height/2+16),e.restore()}},u=s=%3E{const%20e=document.querySelector(`[data-testid=%22period-${s}%22]`)%3F.childNodes;return%20Array.from(e).map(t=%3Et.firstChild%3F.childNodes).filter(t=%3Et%26%263%3C=t.length%26%26t[1]%26%26%22Foul%22!==t[1]%3F.firstChild%3F.innerText)},h=(s,e=0)=%3E{const[t,l]=s[0].innerText.split(%22:%22),o=2400-(60*(+t+e)+%20+l),[i,a]=s[2].innerText.split(%22%20-%20%22);return{x:o,y:+i-+a}},r=s=%3E{const%20e=%221st-half%22===s%3F20:0;return%20u(s).map(t=%3Eh(t,e))},c=(()=%3E{const%20s=[{x:0,y:0},...r(%221st-half%22),...r(%222nd-half%22)].sort((e,t)=%3Ee.x-t.x);return%20s.push({x:2400,y:s[s.length-1].y}),s})(),n=2*Math.round(c.reduce((s,{y:e})=%3EMath.max(s,Math.abs(e)),0)/2)+2;(()=%3E{const%20s=document.querySelector(%22[data-testid=\%22period-1st-half\%22]%22);import(%22https://unpkg.com/chart.js%404.4.4/dist/chart.umd.js%22).then(()=%3E{const%20e=document.createElement(%22canvas%22);e.id=%22e%22,e.width=1e3,e.height=500,s.appendChild(e);const%20t=e.getContext(%222d%22);new%20Chart(t,{type:%22line%22,data:{datasets:[{normalized:!0,data:c,fill:!1,backgroundColor:%22blue%22,stepped:!0,borderColor:%22blue%22,borderWidth:2,pointRadius:0}]},options:{plugins:{title:{display:!0,text:document.title.split(%22,%22)[0].replace(%22%20v%20%22,%22%20vs%20%22),fullSize:!1,font:{size:30}},legend:{display:!1}},scales:{x:{type:%22linear%22,grid:{display:!1},min:0,max:2400,ticks:{display:!1}},y:{min:-n,max:n,reverse:!1,border:{dash:({tick:l})=%3E0===l.value%3F[0,0]:[5,5]},grid:{drawTicks:!1},ticks:{stepSize:20%3En%3F1:2}}}},plugins:[d,f]}),t.save(),t.beginPath(),t.stroke(),t.restore()})})()})(); 
+
   </body>
 </html>
