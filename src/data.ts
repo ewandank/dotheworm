@@ -10,7 +10,7 @@ const getValidRows = (period: Half) => {
   const rows = document.querySelector(
     `[data-testid="period-${period}"]`
   )?.childNodes;
-  return Array.from(rows)
+  return Array.from(rows ?? [])
     .map((row) => row.firstChild?.childNodes)
     .filter(
       (row) =>
