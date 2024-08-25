@@ -1,52 +1,9 @@
 import { Chart, registerables } from "chart.js";
-import annoationPlugin from "chartjs-plugin-annotation";
-const backgroundPlugin = {
-  id: "customCanvasBackgroundColor",
-  beforeDraw: (chart) => {
-    const { ctx } = chart;
-    ctx.save();
-    ctx.globalCompositeOperation = "destination-over";
-    ctx.fillStyle = "#ffffff";
-    ctx.fillRect(0, 0, chart.width, chart.height);
-    ctx.restore();
-  },
-};
-
-const textPlugin = {
-  id: "textPlugin",
-  beforeDraw: (chart) => {
-    const ctx = chart.ctx;
-    const width = chart.width;
-    const height = chart.height;
-    const fontSize = 100;
-    const text1 = "H1";
-    const text2 = "H2";
-
-    ctx.save();
-    ctx.font = `${fontSize}px Arial`;
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
-    ctx.globalAlpha = 0.8;
-
-    // Draw grey rectangle on the left half
-    ctx.fillStyle = "lightgrey";
-    ctx.fillRect(0, 0, width / 2, height);
-
-    // Draw H1 centered within the grey rectangle
-    ctx.fillStyle = "white";
-    ctx.fillText(text1, width / 4, height / 2);
-
-    // Draw H2
-    ctx.fillStyle = "lightgrey";
-    ctx.fillText(text2, (3 * width) / 4, height / 2);
-
-    ctx.restore();
-  },
-};
+import { backgroundPlugin, labelPlugin } from "./plugins";
 // Helper function to get and filter rows
 const getValidRows = (period) => {
   const rows = document.querySelector(
-    `[data-testid="period-${period}"]`,
+    `[data-testid="period-${period}"]`
   ).childNodes;
   if (rows === null) return [];
   return Array.from(rows)
@@ -56,15 +13,23 @@ const getValidRows = (period) => {
         row &&
         row.length >= 3 &&
         row[1] &&
-        row[1]?.firstChild?.innerText !== "Foul",
+        row[1]?.firstChild?.innerText !== "Foul"
     );
 };
 
-// Helper function to process a valid row and extract time and delta
-const processRow = (row, halfOffset = 0) => {
+/**
+ * A helper function to parse a row of into our data object.
+ * a row might look like: 
+ * `12:00 2pts 10-5`
+ * as such, parse the first part into seconds and the last part into a delta,
+ * ignoring the middle gunk
+ * @param row 
+ * @param halfOffset 
+ * @returns 
+ */
+const processRow = (row: any, halfOffset = 0) => {
   const [minutes, seconds] = row[0].innerText.split(":");
   const time = 2400 - ((Number(minutes) + halfOffset) * 60 + Number(seconds));
-  console.log(typeof time);
   const [teamA, teamB] = row[2].innerText.split(" - ");
   console.log({
     ms: `${Number(minutes) + halfOffset}:${Number(seconds)}`,
@@ -76,17 +41,17 @@ const processRow = (row, halfOffset = 0) => {
 
 /**
  * Process both halves and combine results
- * @param {any} period
- * @param {number} halfOffset
- * @returns
+ * @param period first or second half
+ * @returns an array of objects with a delta and time in seconds
  */
-const processHalf = (period, halfOffset) => {
+const processHalf = (period: "1st-half" | "2nd-half") => {
+  const halfOffset = period === "1st-half" ? 20 : 0
   return getValidRows(period).map((row) => processRow(row, halfOffset));
 };
 
 // Combine first and second half results
-const secondHalfResults = processHalf("2nd-half", 0);
-const firstHalfResults = processHalf("1st-half", 20);
+const secondHalfResults = processHalf("2nd-half");
+const firstHalfResults = processHalf("1st-half");
 const allResults: { time: number; delta: number }[] = [
   { time: 0, delta: 0 },
   ...firstHalfResults,
@@ -96,9 +61,9 @@ const allResults: { time: number; delta: number }[] = [
 const times = allResults.map((result) => result.time);
 const deltas = allResults.map((result) => result.delta);
 times.push(2400);
-deltas.push(deltas.at(-1));
+deltas.push(deltas[deltas.length-1]);
 // Create the chart
-Chart.register(...registerables, annoationPlugin);
+Chart.register(...registerables);
 // Create and append canvas element
 const canvas = document.createElement("canvas");
 
@@ -111,7 +76,7 @@ const graphSize =
     2 +
   4;
 const ctx = canvas.getContext("2d");
-const myChart = new Chart(ctx, {
+const myChart = new Chart(ctx!, {
   type: "line",
   data: {
     labels: times,
@@ -134,12 +99,12 @@ const myChart = new Chart(ctx, {
     plugins: {
       title: {
         display: true,
-        text: "Custom Chart Title",
+        text: document.title.split(",")[0],
         fullSize: false,
+        font: {size: 30}
       },
-      backgroundColor: backgroundPlugin,
+      // backgroundColor: backgroundPlugin,
       legend: { display: false },
-      textPlugin: true,
     },
     scales: {
       x: {
@@ -155,14 +120,13 @@ const myChart = new Chart(ctx, {
         min: -graphSize,
         max: graphSize,
         reverse: false,
+        border: {
+          dash: ({ tick }) => (tick.value === 0 ? [0,0] :[5,5]),
+        },
         grid: {
-          lineWidth: ({ tick }) => {
-            console.log(tick.value);
-            return tick.value == 0 ? 1 : 0;
-          },
+
           drawTicks: false,
 
-          // color: "black",
         },
         ticks: {
           stepSize: graphSize < 20 ? 1 : 2,
@@ -171,16 +135,18 @@ const myChart = new Chart(ctx, {
     },
   },
 
-  plugins: [backgroundPlugin, textPlugin],
+  plugins: [backgroundPlugin, labelPlugin],
 });
-ctx.save();
-ctx.beginPath();
-ctx.stroke();
-ctx.restore();
+ctx?.save();
+ctx?.beginPath();
+ctx?.stroke();
+ctx?.restore();
 
 const button = document.createElement("button");
 button.innerText = "flip across x axis";
 button.onclick = () => {
+  if (myChart?.options?.scales?.y === undefined) return;
+
   myChart.options.scales.y.reverse = !myChart.options.scales.y.reverse;
   myChart.update();
 };
