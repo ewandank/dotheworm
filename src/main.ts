@@ -1,7 +1,6 @@
 // This is super annoying to type. I can't be stuffed.
 import { backgroundPlugin, labelPlugin } from "./plugins";
 import { getData } from "./data";
-
 const data = getData();
 
 /**
@@ -17,25 +16,21 @@ const graphSize =
   const firstHalfSection = document.querySelector(
     `[data-testid="period-1st-half"]`
   );
-
-  // `Chart` is now available in global scope.
+  if (!firstHalfSection) return;
+  // Chart is now available on the window object, idk how to scope it properly. 
   import("https://unpkg.com/chart.js@4.4.4/dist/chart.umd.js").then(() => {
     const canvas = document.createElement("canvas");
-    // Minifies better.
-    canvas.id = "a";
     canvas.width = 1000;
     canvas.height = 500;
     firstHalfSection.appendChild(canvas);
 
     const ctx = canvas.getContext("2d");
-
-    new Chart(ctx, {
+    if (!ctx) return;
+    new  Chart(ctx, {
       type: "line",
       data: {
-        // labels: times,
         datasets: [
           {
-            // label: "Score",
             normalized: true,
 
             data,
