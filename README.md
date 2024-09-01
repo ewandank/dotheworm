@@ -1,6 +1,6 @@
 # Do The Worm
 
-A javascript bookmarklet that will create a worm graph from a playHQ Play-by-Play table by parsing the dom, and doing some mildy evil things to import chartjs without CSP. Designed to look similar to the afl's worm graphs.
+A javascript bookmarklet that will create a worm graph from a playHQ Play-by-Play table by parsing the dom, and doing some mildy evil things to import chartjs without violating CSP. Designed to look similar to the afl's worm graphs.
 
 ## Some random thoughts
 
