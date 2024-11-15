@@ -21,13 +21,11 @@
           new RegExp(specialCharacters.join("|"), "g"),
           encodeURIComponent
         );
-        const prefix = code => `javascript:${code}`;
-     const thingToCopy = prefix(urlencode(jsFunc))
-     document.body.append(thingToCopy)
+      const prefix = (code) => `javascript:${code}`;
+      const thingToCopy = prefix(urlencode(jsFunc));
+      document.body.append(thingToCopy);
     </script>
     <title>Worm Chart Bookmarklet</title>
   </head>
-  <body>
-
-  </body>
+  <body></body>
 </html>
